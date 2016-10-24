@@ -44,6 +44,8 @@ dimensions.each do |density, scale, zoom|
     if col >= cols
       col = 0
       row += 1
+
+      # TODO: upload and `rm #{target}`
     end
   end
 end
