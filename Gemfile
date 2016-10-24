@@ -1,6 +1,9 @@
-# frozen_string_literal: true
 source "https://rubygems.org"
+ruby '2.2.4'
 
-# gem "rails"
 gem "sinatra"
 gem "sidekiq"
+
+group :development do
+  gem "pry"
+end
