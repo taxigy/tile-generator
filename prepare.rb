@@ -13,12 +13,8 @@ end
 
 dimensions.each do |density, scale, zoom|
   intermediary_png = "source_#{zoom}.png"
-  if source_format == "pdf"
-    `convert #{source_images.join(" ")} +append -resize #{scale} #{intermediary_png}`
-  else
-    `convert -density #{density} -background white -alpha remove "#{source_images}" +append "#{intermediary_png}"`
-
-  matching = /(\d+)x(\d+)$/.match `identify #{png}`
+  `convert -density #{density} -background white -alpha remove #{source_images.join(" ")} +append -resize #{scale} #{intermediary_png}`
+  matching = /(\d+)x(\d+)$/.match `identify #{intermediary_png}`
   original_width = matching[1].to_i
   original_height = matching[2].to_i
   rounded_width = width + 256 - (width % 256)
