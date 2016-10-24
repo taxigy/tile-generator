@@ -1,5 +1,4 @@
 require 'sidekiq'
-require 'pry'
 
 class TileGeneratorWorker
   include Sidekiq::Worker
