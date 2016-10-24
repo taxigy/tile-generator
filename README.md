@@ -66,3 +66,11 @@ or run web server:
 ```
 heroku local
 ```
+
+## Run
+
+To run properly, we need **environment variables**:
+
+- `BASE_DENSITY` to set base density for a 100% scale PDF, like `300`.
+- `BASE_ZOOM` to set base zoom level that Leaflet will be comfortable with, like `16`.
+- `ZOOM_LEVELS` to set all the zoom levels (relative to base zoom) that we need tiles for, like `0, -1, -2`.
