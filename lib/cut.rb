@@ -42,7 +42,7 @@ def cut source_urls, offer
     row = 0
     (0...(cols * rows)).each do |n|
       initial = "tile_#{offer}_#{zoom}_#{n}.jpg"
-      target = "tile_#{offer}_#{zoom}_#{col}_#{row}.jpg"
+      target = "#{offer}/tile_#{offer}_#{zoom}_#{col}_#{row}.jpg" # NOTE: putting result tiles into a folder
 
       puts "#{initial} -> #{target}"
       `mv "#{initial}" "#{target}"`
@@ -53,7 +53,8 @@ def cut source_urls, offer
         col = 0
         row += 1
 
-        # TODO: upload and `rm #{target}`
+        # TODO: upload
+        # `rm #{initial} #{target}`
       end
     end
 
