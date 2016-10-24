@@ -1,4 +1,6 @@
-def cut source_images, offer
+require 'open-uri'
+
+def cut source_urls, offer
   base_zoom = ENV["BASE_ZOOM"].to_i or 16 # for example, 16
   base_density = ENV["BASE_DENSITY"].to_i or 300 # base PDF density
   zoom_levels = ENV["ZOOM_LEVELS"] or "0, -1, -2"
@@ -11,8 +13,20 @@ def cut source_images, offer
   end
 
   dimensions.each do |density, scale, zoom|
+    images_count = 0
+    source_images = source_urls.map do |url|
+      filename = "#{offer}_#{images_count}.png"
+
+      open(filename, "wb") do |file|
+        file << open(url).read
+      end
+
+      images_count += 1
+      filename
+    end
+
     intermediary_png = "source_#{zoom}.png"
-    `convert -density #{density} -background white -alpha remove #{source_images.join(" ")} +append -resize #{scale} #{intermediary_png}`
+    `convert -density #{density} -background white -alpha remove #{source_images.join(" ")} +append -resize #{scale} "#{intermediary_png}"`
     matching = /(\d+)x(\d+)$/.match `identify #{intermediary_png}`
     original_width = matching[1].to_i
     original_height = matching[2].to_i
@@ -31,8 +45,7 @@ def cut source_images, offer
       target = "tile_#{offer}_#{zoom}_#{col}_#{row}.jpg"
 
       puts "#{initial} -> #{target}"
-
-      `mv #{initial} #{target}`
+      `mv "#{initial}" "#{target}"`
 
       col += 1
 
@@ -42,6 +55,12 @@ def cut source_images, offer
 
         # TODO: upload and `rm #{target}`
       end
+    end
+
+    `rm "#{intermediary_png}"`
+
+    (0...images_count).each do |n|
+      `rm "#{offer}_#{n}.png"`
     end
   end
 end
