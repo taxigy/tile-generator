@@ -36,4 +36,18 @@ Install ImageMagick:
 brew install imagemagick
 ```
 
+Create .env file as in env.example
+
+Then install dependencies:
+
+```
+bundle install
+```
+
 then run the script.
+
+or run web server:
+
+```
+heroku local
+```
