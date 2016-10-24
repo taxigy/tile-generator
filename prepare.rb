@@ -1,7 +1,7 @@
 source_images = ARGV[0] # TODO: get from HTTP POST request
 offer = ARGV[1] # TODO: get from HTTP POST request
-base_zoom = ENV["BASE_ZOOM"] or 16 # for example, 16
-base_density = ENV["BASE_DENSITY"] or 300 # base PDF density
+base_zoom = ENV["BASE_ZOOM"].to_i or 16 # for example, 16
+base_density = ENV["BASE_DENSITY"].to_i or 300 # base PDF density
 zoom_levels = ENV["ZOOM_LEVELS"] or "0, -1, -2"
 
 dimensions = zoom_levels.split(/,\s+/).map do |z|
