@@ -1,77 +1,129 @@
 require 'open-uri'
+require 'mini_magick'
 require_relative "upload"
 
+def root_dir
+  root = File.expand_path(File.join(File.dirname(__FILE__), '..', 'temp'))
+  Dir.mkdir(root) unless File.exists?(root)
+  root
+end
 
-def cut source_urls, offer
-  root_dir = File.expand_path(__FILE__, '..')
+def dimensions
+  base_zoom = ENV.fetch('BASE_ZOOM', '16').to_i
+  base_density = ENV.fetch('BASE_DENSITY', '300').to_i
+  zoom_levels = ENV.fetch('ZOOM_LEVELS', '0, -1, -2')
 
-  ENV["BASE_ZOOM"] ||= "16"
-  ENV["BASE_DENSITY"] ||= "300"
-  ENV["ZOOM_LEVELS"] ||= "0, -1, -2"
-  base_zoom = ENV["BASE_ZOOM"].to_i
-  base_density = ENV["BASE_DENSITY"].to_i
-  zoom_levels = ENV["ZOOM_LEVELS"]
-  dimensions = []
-
-  zoom_levels.split(/,\s+/).each do |z|
+  zoom_levels.split(/,\s+/).map do |z|
     z = z.to_i
     density = (base_density * 2 ** z).to_i
     scale = "#{(base_density * 2 ** z / base_density * 100).to_i}%"
-    dimensions.push [density, scale, base_zoom + z]
+
+    [density, scale, base_zoom + z]
+  end
+end
+
+def download_images(source_urls, offer)
+  source_urls.map.with_index do |url, index|
+    filename = File.join(root_dir, "#{offer}_#{index}.png")
+
+    open(filename, "wb") do |file|
+      file << open(url).read
+    end
+
+    filename
+  end
+end
+
+def prepare(offer, density, scale, zoom, source_images)
+  out = File.join(root_dir, "offer_#{zoom}.png")
+
+  MiniMagick::Tool::Convert.new do |convert|
+    convert << "-density" << density
+    convert << "-background" << 'white'
+    convert << "-alpha" << "remove"
+    source_images.each do |src|
+      convert << src
+    end
+    convert << "+append"
+    convert << "-resize" << scale
+    convert << out
   end
 
+  out
+end
+
+def resolution(png)
+  out = MiniMagick::Tool::Identify.new do |identify|
+    identify << png
+  end
+  matching = /PNG\s(\d+)x(\d+)/.match(out)
+  [matching[1].to_i, matching[2].to_i]
+end
+
+def make_tiles!(offer, zoom, png)
+  original_width, original_height = resolution(png)
+  rounded_width = original_width + 256 - (original_width % 256)
+  rounded_height = original_height + 256 - (original_height % 256)
+
+  normalized_png = File.join(root_dir, "#{offer}_normalized_#{zoom}.png")
+  # `convert -gravity center -background white -extent "#{rounded_width}x#{rounded_height}" "#{intermediary_png}" "#{intermediary_png}"`
+  MiniMagick::Tool::Convert.new do |convert|
+    convert << "-gravity" << "center"
+    convert << "-background" << "white"
+    convert << "-extent" << "#{rounded_width}x#{rounded_height}"
+    convert << png
+    convert << normalized_png
+  end
+
+  # `convert -crop "256x256" +repage +adjoin "#{intermediary_png}" "tile_#{offer}_#{zoom}_%01d.jpg"`
+  tile_name = File.join(root_dir, "tile_#{offer}_#{zoom}_%01d.jpg")
+  MiniMagick::Tool::Convert.new do |convert|
+    convert << "-crop" << "256x256"
+    convert << "+repage"
+    convert << "+adjoin"
+    convert << normalized_png
+    convert << tile_name
+  end
+
+  File.delete(normalized_png)
+
+  cols = (rounded_width / 256).to_i
+  rows = (rounded_height / 256).to_i
+  images_count = cols * rows
+
+  col = 0
+  row = 0
+  tiles = (0...images_count).map do |n|
+    initial = File.join(root_dir, "tile_#{offer}_#{zoom}_#{n}.jpg")
+    target = File.join(root_dir, "tile_#{offer}_#{zoom}_#{col}_#{row}.jpg")
+    File.rename(initial, target)
+
+    col += 1
+    if col >= cols
+      col = 0
+      row += 1
+    end
+
+    target
+  end
+
+  tiles
+end
+
+def cut(source_urls, offer)
   dimensions.each do |density, scale, zoom|
-    images_count = 0
-    source_images = []
-    source_urls.each do |url|
-      filename = "#{offer}_#{images_count}.png"
+    source_images = download_images(source_urls, offer)
+    intermediary_png = prepare(offer, density, scale, zoom, source_images)
+    tiles = make_tiles!(offer, zoom, intermediary_png)
 
-      open(filename, "wb") do |file|
-        file << open(url).read
-      end
-
-      images_count += 1
-      source_images.push filename
+    tiles.each do |tile|
+      dest = "#{offer}/#{File.basename(tile)}"
+      upload(tile, dest)
     end
 
-    intermediary_png = "source_#{zoom}.png"
-    `convert -density #{density} -background white -alpha remove #{source_images.join(" ")} +append -resize #{scale} "#{intermediary_png}"`
-    matching = /PNG\s(\d+)x(\d+)/.match `identify #{intermediary_png}`
-    original_width = matching[1].to_i
-    original_height = matching[2].to_i
-    rounded_width = original_width + 256 - (original_width % 256)
-    rounded_height = original_height + 256 - (original_height % 256)
-    cols = (rounded_width / 256).to_i
-    rows = (rounded_height / 256).to_i
-    puts "Initial dimensions: #{original_width}x#{original_height}, new dimensions: #{rounded_width}x#{rounded_height}"
-    `convert -gravity center -background white -extent "#{rounded_width}x#{rounded_height}" "#{intermediary_png}" "#{intermediary_png}"`
-    `convert -crop "256x256" +repage +adjoin "#{intermediary_png}" "tile_#{offer}_#{zoom}_%01d.jpg"`
-
-    col = 0
-    row = 0
-    (0...(cols * rows)).each do |n|
-      initial = "tile_#{offer}_#{zoom}_#{n}.jpg"
-      target = "#{offer}/tile_#{offer}_#{zoom}_#{col}_#{row}.jpg" # NOTE: putting result tiles into a folder
-
-      # puts "#{initial} -> #{target}"
-      # `mv "#{initial}" "#{target}"`
-
-      col += 1
-
-      if col >= cols
-        col = 0
-        row += 1
-
-        upload(File.expand_path(root_dir, initial), target)
-        `rm #{initial}`
-      end
-    end
-
-    `rm "#{intermediary_png}"`
-
-    (0...images_count).each do |n|
-      `rm "tile_#{offer}_#{zoom}_#{n}.jpg"`
-    end
+    File.delete(*source_images)
+    File.delete(intermediary_png)
+    File.delete(*tiles)
   end
 end
 
