@@ -66,7 +66,7 @@ def cut source_urls, offer
     `rm "#{intermediary_png}"`
 
     (0...images_count).each do |n|
-      `rm "#{offer}_#{n}.png"`
+      `rm "tile_#{offer}_#{n}.png"`
     end
   end
 end
