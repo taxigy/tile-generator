@@ -10,6 +10,7 @@ connection = Fog::Storage.new({
 $bucket = connection.directories.get(ENV.fetch('S3_BUCKET_NAME'))
 
 def upload(src, dst)
+  puts "upload: #{src} to #{dst}"
   file = $bucket.files.create(
     key: dst,
     body: File.open(src),

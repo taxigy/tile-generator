@@ -1,6 +1,10 @@
 require 'open-uri'
+require_relative "upload"
+
 
 def cut source_urls, offer
+  root_dir = File.expand_path(__FILE__, '..')
+
   ENV["BASE_ZOOM"] ||= "16"
   ENV["BASE_DENSITY"] ||= "300"
   ENV["ZOOM_LEVELS"] ||= "0, -1, -2"
@@ -49,8 +53,8 @@ def cut source_urls, offer
       initial = "tile_#{offer}_#{zoom}_#{n}.jpg"
       target = "#{offer}/tile_#{offer}_#{zoom}_#{col}_#{row}.jpg" # NOTE: putting result tiles into a folder
 
-      puts "#{initial} -> #{target}"
-      `mv "#{initial}" "#{target}"`
+      # puts "#{initial} -> #{target}"
+      # `mv "#{initial}" "#{target}"`
 
       col += 1
 
@@ -58,8 +62,8 @@ def cut source_urls, offer
         col = 0
         row += 1
 
-        # TODO: upload
-        # `rm #{initial} #{target}`
+        upload(File.expand_path(root_dir, initial), target)
+        `rm #{initial}`
       end
     end
 

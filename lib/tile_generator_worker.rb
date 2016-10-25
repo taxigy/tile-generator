@@ -1,11 +1,10 @@
 require 'sidekiq'
-require_relative './upload'
+require_relative './cut'
 
 class TileGeneratorWorker
   include Sidekiq::Worker
 
   def perform(sources, offer)
-    file = File.expand_path(File.join(File.dirname(__FILE__), '..', 'temp', 'test.html'))
-    upload(file)
+    cut(sources, offer)
   end
 end
