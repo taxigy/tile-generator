@@ -5,6 +5,7 @@ gem "sinatra"
 gem "sidekiq"
 gem 'fog'
 gem 'mime-types'
+gem 'mini_magick'
 
 group :development do
   gem "pry"
