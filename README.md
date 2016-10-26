@@ -32,14 +32,14 @@ Current implementation uses ImageMagick, we can use GraphicsMagic instead.
 
 ```bash
 curl -X POST https://tile-generator.herokuapp.com \
-     -H 'Content-Type: application/json'
-     -d '{
-       "sources": [
-         "http://placehold.it/1000x1000",
-         "http://placehold.it/1000x1000",
-         "http://placehold.it/1000x1000"
-       ],
-       "offer": "abcxyz123",
+     -H 'Content-Type: application/json' \
+     -d '{ \
+       "sources": [ \
+         "http://placehold.it/2000x3000", \
+         "http://placehold.it/2000x3000", \
+         "http://placehold.it/2000x3000" \
+       ], \
+       "offer": "abcxyz123", \
      }'
 ```
 
@@ -71,6 +71,10 @@ heroku local
 
 To run properly, we need **environment variables**:
 
+- `AWS_ACCESS_KEY_ID` and
+- `AWS_SECRET_ACCESS_KEY` to set AWS credentials.
+- `AWS_REGION` and
+- `S3_BUCKET_NAME` to make it possible to save data to AWS S3 bucket.
 - `BASE_DENSITY` to set base density for a 100% scale PDF, like `300`.
 - `BASE_ZOOM` to set base zoom level that Leaflet will be comfortable with, like `16`.
 - `ZOOM_LEVELS` to set all the zoom levels (relative to base zoom) that we need tiles for, like `0, -1, -2`.
