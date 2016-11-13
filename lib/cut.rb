@@ -1,6 +1,6 @@
 require 'open-uri'
 require 'mini_magick'
-require_relative "upload"
+require_relative "s3_bucket"
 
 def root_dir
   root = File.expand_path(File.join(File.dirname(__FILE__), '..', 'temp'))
@@ -111,6 +111,8 @@ def make_tiles!(offer, zoom, png)
 end
 
 def cut(source_urls, offer)
+  s3_delete_dir(offer)
+
   dimensions.each do |density, scale, zoom|
     source_images = download_images(source_urls, offer)
     intermediary_png = prepare(offer, density, scale, zoom, source_images)
@@ -118,7 +120,7 @@ def cut(source_urls, offer)
 
     tiles.each do |tile|
       dest = "#{offer}/#{File.basename(tile)}"
-      upload(tile, dest)
+      s3_upload(tile, dest)
     end
 
     File.delete(*source_images)
