@@ -8,7 +8,7 @@ $bucket = s3.bucket(bucket_name)
 
 def s3_upload(src, dst)
   puts "upload: #{src} to #{dst}"
-  obj = $bucket.object(dst)
+  obj = $bucket.object(dst, acl: "public-read")
   obj.upload_file(src)
 end
 
