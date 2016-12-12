@@ -8,8 +8,8 @@ $bucket = s3.bucket(bucket_name)
 
 def s3_upload(src, dst)
   puts "upload: #{src} to #{dst}"
-  obj = $bucket.object(dst, acl: "public-read")
-  obj.upload_file(src)
+  obj = $bucket.object(dst)
+  obj.upload_file(src, acl: "public-read")
 end
 
 def s3_delete_dir(name)

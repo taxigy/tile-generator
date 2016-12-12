@@ -33,6 +33,7 @@ Current implementation uses ImageMagick, we can use GraphicsMagic instead.
 ```bash
 curl -X POST https://tile-generator.herokuapp.com \
      -H 'Content-Type: application/json' \
+     -H 'X-Secret-Token: 123' \
      -d '{ \
        "sources": [ \
          "http://placehold.it/2000x3000", \
@@ -78,3 +79,4 @@ To run properly, we need **environment variables**:
 - `BASE_DENSITY` to set base density for a 100% scale PDF, like `300`.
 - `BASE_ZOOM` to set base zoom level that Leaflet will be comfortable with, like `16`.
 - `ZOOM_LEVELS` to set all the zoom levels (relative to base zoom) that we need tiles for, like `0, -1, -2`.
+- `SECRET_TOKEN_<any>` to set secret token for access to application
